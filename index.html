@@ -1,485 +1,80 @@
-
-<!doctype html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>🌈 胡胡長高記錄</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif;background:linear-gradient(135deg,#fff0f6,#eaf7ff);color:#354052}
-header{text-align:center;padding:24px 12px;background:#fff9;box-shadow:0 2px 12px #ddd6}
-h1{margin:0;font-size:28px}h2{font-size:21px}
-.wrap{max-width:1100px;margin:auto;padding:15px}
-.card{background:white;border-radius:20px;padding:20px;margin:15px 0;box-shadow:0 5px 20px #b9c9d533}
-nav{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-button{cursor:pointer;border:0;border-radius:12px;padding:11px 15px;background:#e7e9ff;color:#354052;font-size:15px}
-button.primary,nav button.active{background:#765de8;color:white}
-button:disabled{opacity:.35;cursor:not-allowed}
-input,select{padding:11px;border:1px solid #ddd;border-radius:10px;font-size:16px;max-width:100%}
-form{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:15px 0}
-.hidden{display:none!important}
-.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.person{background:#f5f0ff;border-radius:16px;text-align:center;padding:16px}
-.avatar{width:95px;height:95px;border-radius:50%;object-fit:cover;background:white}
-.points{font-size:26px;font-weight:bold;color:#765de8}
-.entry{padding:12px;border-bottom:1px solid #eee}
-.tablebox{overflow-x:auto}
-table{border-collapse:collapse;min-width:760px;width:100%;background:white}
-th,td{padding:10px;border:1px solid #e2e2ee;text-align:center}
-th:first-child,td:first-child{text-align:left;min-width:150px}
-th{background:#efeaff}
-td button{min-width:42px}
-.status{padding:10px;background:#eef9f2;border-radius:10px;margin-bottom:12px}
-.muted{color:#788294;font-size:14px}
-.authbox{max-width:450px;margin:40px auto;background:white;padding:25px;border-radius:20px}
-.authbox input{width:100%}
-.authbox form{display:grid}
-.chart{display:flex;align-items:end;gap:12px;height:170px;padding:10px;border-bottom:2px solid #aaa}
-.bar{background:#b4a4fa;border-radius:7px 7px 0 0;min-width:34px;text-align:center;font-size:11px}
-footer{text-align:center;color:#888;padding:20px;font-size:12px}
-@media(max-width:600px){.people{grid-template-columns:1fr}h1{font-size:24px}.card{padding:13px}}
-</style>
-</head>
-<body>
-<header>
-<h1>🌈 胡胡長高記錄</h1>
-<p>Carole & Pyper 的家庭冒險樂園 ✨</p>
-</header>
-<main class="wrap">
-<div id="login" class="authbox">
-<h2>🔐 家庭成員登入</h2>
-<form id="loginForm">
-<input id="email" type="email" placeholder="電子郵件" autocomplete="username" required>
-<input id="password" type="password" placeholder="密碼" autocomplete="current-password" required>
-<button class="primary">登入</button>
-</form>
-<p id="loginMsg" class="muted"></p>
-</div>
-
-<div id="app" class="hidden">
-<div id="status" class="status">正在連接 Firebase…</div>
-<div class="row" style="justify-content:space-between">
-<b id="role"></b><button id="logout">登出</button>
-</div>
-<nav>
-<button data-page="home" class="active">🏠 首頁</button>
-<button data-page="week">📅 全家週表</button>
-<button data-page="tasks">📝 任務管理</button>
-<button data-page="shop">🎁 獎勵商店</button>
-<button data-page="height">📏 身高紀錄</button>
-</nav>
-
-<section id="home">
-<div class="card">
-<h2>🌟 我們家的小英雄</h2>
-<div id="people" class="people"></div>
-<h3>今天的任務</h3>
-<div id="today"></div>
-</div>
-</section>
-
-<section id="week" class="hidden">
-<div class="card">
-<div class="row" style="justify-content:space-between">
-<h2>📅 全家每週任務表</h2>
-<div>
-<button id="prev">◀</button>
-<button id="now">本週</button>
-<button id="next">▶</button>
-</div>
-</div>
-<p id="range"></p>
-<div id="weekTable" class="tablebox"></div>
-</div>
-</section>
-
-<section id="tasks" class="hidden">
-<div class="card">
-<h2>📝 家庭任務管理</h2>
-<div id="taskList"></div>
-<form id="taskForm" class="parentOnly">
-<input name="title" placeholder="任務名稱" required>
-<select name="who">
-<option value="both">兩位女兒</option>
-<option value="Carole">Carole</option>
-<option value="Pyper">Pyper</option>
-</select>
-<input name="pts" type="number" min="0" value="20" required>
-<select name="repeat" id="repeat">
-<option value="daily">每天</option>
-<option value="weekly">指定星期</option>
-</select>
-<div id="weekdays">
-<label><input type="checkbox" value="1">一</label>
-<label><input type="checkbox" value="2">二</label>
-<label><input type="checkbox" value="3">三</label>
-<label><input type="checkbox" value="4">四</label>
-<label><input type="checkbox" value="5">五</label>
-<label><input type="checkbox" value="6">六</label>
-<label><input type="checkbox" value="0">日</label>
-</div>
-<button class="primary">新增任務</button>
-</form>
-</div>
-</section>
-
-<section id="shop" class="hidden">
-<div class="card">
-<h2>🎁 積分獎勵商店</h2>
-<p class="muted">獎勵兌換由家長確認。</p>
-<div id="rewards"></div>
-<form id="rewardForm" class="parentOnly">
-<input name="name" placeholder="獎勵名稱" required>
-<input name="cost" type="number" min="1" placeholder="需要點數" required>
-<button class="primary">新增獎勵</button>
-</form>
-<h3>兌換紀錄</h3>
-<div id="redemptions"></div>
-</div>
-</section>
-
-<section id="height" class="hidden">
-<div class="card">
-<h2>📏 身高紀錄</h2>
-<form id="heightForm" class="parentOnly">
-<select name="who"><option>Carole</option><option>Pyper</option></select>
-<input name="date" type="date" required>
-<input name="cm" type="number" min="50" max="230" step=".1" placeholder="身高 cm" required>
-<button class="primary">新增紀錄</button>
-</form>
-<div id="heightList"></div>
-</div>
-</section>
-<footer>☁️ 家庭資料使用 Firebase 同步；個人照片暫時只儲存在目前裝置。</footer>
-</div>
-</main>
-
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>🌈 胡胡長高記錄｜家庭同步版</title><style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif;background:linear-gradient(150deg,#f9e8ff,#eaf7ff 65%,#fff4d9);color:#34304e;min-height:100vh}header{padding:24px 18px 12px;text-align:center}h1{font-size:26px;margin:0}header p{margin:6px;color:#776d92}.wrap{max-width:900px;margin:auto;padding:0 14px 95px}.nav{display:flex;gap:7px;overflow-x:auto;padding:10px 0 16px;position:sticky;top:0;background:#f7eefdE8;z-index:5}.nav button{white-space:nowrap;border:0;border-radius:20px;background:white;padding:11px 13px;font-weight:700;color:#756a94}.nav button.active{background:#8259d8;color:white}.card{background:#ffffffdc;border:1px solid #fff;border-radius:23px;padding:18px;margin:12px 0;box-shadow:0 6px 20px #bca8e333}h2{font-size:20px;margin:0 0 14px}.people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.person{text-align:center;background:#faf5ff;border-radius:19px;padding:14px 7px}.person:nth-child(2){background:#eaf8ff}.avatar{width:94px;height:94px;border-radius:50%;object-fit:cover;border:4px solid white;box-shadow:0 3px 12px #bcb0cc}.points{font-size:23px;font-weight:800;color:#8052cb;margin:7px}.small{font-size:13px;color:#817b8d}.pill{display:inline-block;border-radius:20px;padding:5px 10px;background:#f1e7ff;font-size:12px}.primary,button.action{border:0;background:#8559d9;color:white;padding:12px 16px;border-radius:14px;font-weight:700;cursor:pointer}.secondary{border:0;background:#efe7ff;color:#6540a9;padding:9px 12px;border-radius:12px;font-weight:700}input,select{border:1px solid #ddd4ec;background:white;border-radius:12px;padding:11px;font-size:16px;max-width:100%}label{display:block;margin:9px 0;font-weight:600;font-size:14px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.days{display:flex;gap:8px;flex-wrap:wrap}.days label{background:#f0eaff;border-radius:10px;padding:7px;margin:0}.tablebox{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:650px;font-size:13px}th,td{border-bottom:1px solid #eee8f7;padding:10px 5px;text-align:center}th:first-child,td:first-child{text-align:left;min-width:160px}td button{border:0;border-radius:9px;padding:7px 9px;background:#eee5ff;color:#6744a2}td button.done{background:#c5f1d8;color:#216a43}td.off{color:#ccc}.shop{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.reward{background:#faf5ff;border-radius:16px;padding:13px}.reward b{display:block;margin:5px 0}.reward button{margin-top:8px}.entry{padding:10px 0;border-bottom:1px solid #eee}.hidden{display:none!important}.muted{color:#8c8599;font-size:13px}svg{width:100%;height:230px}footer{text-align:center;color:#867b98;font-size:12px;padding:20px}@media(min-width:700px){.avatar{width:120px;height:120px}.shop{grid-template-columns:repeat(3,1fr)}} .taskhead td{background:#f1e9ff;text-align:left;padding:12px 9px}.membercell{font-weight:700;white-space:nowrap}
+.authbox{max-width:480px;margin:40px auto;padding:24px;background:white;border-radius:20px;box-shadow:0 8px 25px #bba5d055}.authbox input{display:block;width:100%;margin:10px 0;padding:12px}.status{padding:9px;text-align:center;background:#fff8da;border-radius:12px;margin-bottom:12px}.muted{color:#776d92}.off{color:#aaa}.taskhead td{background:#f3eaff}.membercell{font-weight:700;white-space:nowrap}.hidden{display:none!important} table{border-collapse:collapse;min-width:660px;width:100%}th,td{border:1px solid #eee;padding:8px;text-align:center}th:first-child,td:first-child{text-align:left} .tablebox{overflow:auto}button{cursor:pointer} .person{padding:12px} .avatar{width:100px;height:100px;border-radius:50%}
+</style></head><body><header><h1>🌈 胡胡長高記錄</h1><p>Carole & Pyper 的家庭冒險樂園</p></header><main class="wrap"><div id="login" class="authbox"><h2>🔐 家庭成員登入</h2><form id="loginForm"><input id="email" type="email" autocomplete="username" placeholder="電子郵件" required><input id="password" type="password" autocomplete="current-password" placeholder="密碼" required><button class="primary">登入</button></form><p id="loginMsg" class="muted"></p></div><div id="app" class="hidden"><div class="status" id="status">連線中…</div><div class="row" style="justify-content:space-between"><b id="role"></b><button class="secondary" id="logout">登出</button></div><nav class="nav"><button data-page="home" class="active">🏠 首頁</button><button data-page="week">📅 全家週表</button><button data-page="tasks">📝 任務管理</button><button data-page="shop">🎁 獎勵商店</button><button data-page="height">📏 身高紀錄</button></nav><section id="home"><div class="card"><h2>🌟 家庭積分</h2><div class="people" id="people"></div><h3>今天的任務</h3><div id="today"></div></div></section><section id="week" class="hidden"><div class="card"><div class="row" style="justify-content:space-between"><h2>📅 全家每週任務表</h2><div><button class="secondary" id="prev">◀</button><button class="secondary" id="now">本週</button><button class="secondary" id="next">▶</button></div></div><p id="range"></p><div class="tablebox" id="weekTable"></div></div></section><section id="tasks" class="hidden"><div class="card"><h2>📝 家庭任務</h2><div id="taskList"></div><form id="taskForm" class="parentOnly"><h3>新增任務</h3><input name="title" placeholder="任務名稱" required><select name="who"><option value="both">兩位女兒</option><option>Carole</option><option>Pyper</option></select><input name="pts" type="number" min="0" value="10" required><select name="repeat" id="repeat"><option value="daily">每天</option><option value="weekly">每週指定日</option></select><div id="weekdays">星期：<label><input type="checkbox" value="1">一</label><label><input type="checkbox" value="2">二</label><label><input type="checkbox" value="3">三</label><label><input type="checkbox" value="4">四</label><label><input type="checkbox" value="5">五</label><label><input type="checkbox" value="6">六</label><label><input type="checkbox" value="0">日</label></div><button class="primary">新增任務</button></form></div></section><section id="shop" class="hidden"><div class="card"><h2>🎁 積分獎勵商店</h2><p class="muted">兌換由家長確認</p><div id="rewards"></div><form id="rewardForm" class="parentOnly"><input name="name" placeholder="新獎勵名稱" required><input name="cost" type="number" min="1" placeholder="點數" required><button class="primary">新增獎勵</button></form><h3>兌換紀錄</h3><div id="redemptions"></div></div></section><section id="height" class="hidden"><div class="card"><h2>📏 身高紀錄</h2><form id="heightForm" class="parentOnly"><select name="who"><option>Carole</option><option>Pyper</option></select><input name="date" type="date" required><input name="cm" type="number" min="50" max="230" step="0.1" placeholder="公分" required><button class="primary">新增身高</button></form><div id="heightList"></div></div></section><footer>🔒 三個指定家庭帳號登入；雲端資料即時同步。頭像以壓縮照片儲存於受保護的 Firestore，並跨裝置同步。</footer></div></main>
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import {getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-import {getFirestore,doc,collection,onSnapshot,setDoc,addDoc,getDoc} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-
-const firebaseConfig={
-apiKey:"AIzaSyCER1LXH_go426_0HzVcnE2_4yGQrtfJPA",
-authDomain:"huhu-family.firebaseapp.com",
-projectId:"huhu-family",
-storageBucket:"huhu-family.firebasestorage.app",
-messagingSenderId:"103047217000",
-appId:"1:103047217000:web:b525e51edf8759bd6160dd",
-measurementId:"G-X2TLY2RFX8"
-};
-
-const UID={
-parent:"3IdS0dQIIUgh54gLZWveTIkYuzS2",
-Carole:"xKRWSKWkk7h6hbtIzTc6k5HJeZ73",
-Pyper:"21JCPFj99yYYaHVmpGMZPewNK8Y2"
-};
-
-const firebaseApp=initializeApp(firebaseConfig);
-const auth=getAuth(firebaseApp);
-const db=getFirestore(firebaseApp);
-const root="families/huhu";
-const $=id=>document.getElementById(id);
-const members=["Carole","Pyper"];
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const pad=n=>String(n).padStart(2,"0");
-const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const today=()=>iso(new Date());
-const weekDates=offset=>{
- const d=new Date();d.setHours(12,0,0,0);
- d.setDate(d.getDate()-((d.getDay()+6)%7)+offset*7);
- return Array.from({length:7},(_,i)=>{
-  const x=new Date(d);x.setDate(d.getDate()+i);return iso(x);
- });
-};
-const weekdays=["日","一","二","三","四","五","六"];
-
-const defaults={
-tasks:[
-{id:"med",title:"早餐中藥",who:"both",pts:20,repeat:"weekly",days:[2,4,6]},
-{id:"jump",title:"跳繩 200 下",who:"both",pts:20,repeat:"daily"},
-{id:"catc",title:"貓罐頭",who:"Carole",pts:20,repeat:"weekly",days:[1,3]},
-{id:"catp",title:"貓罐頭",who:"Pyper",pts:20,repeat:"weekly",days:[5,0]},
-{id:"litterp",title:"清貓砂盆",who:"Pyper",pts:50,repeat:"weekly",days:[1,3]},
-{id:"litterc",title:"清貓砂盆",who:"Carole",pts:50,repeat:"weekly",days:[5,0]},
-{id:"floorp",title:"掃地換水",who:"Pyper",pts:50,repeat:"weekly",days:[3]},
-{id:"floorc",title:"掃地換水",who:"Carole",pts:50,repeat:"weekly",days:[6]}
-],
-rewards:[
-{id:"ice",name:"吃冰淇淋",cost:50},
-{id:"game",name:"遊戲時間增加30分鐘",cost:100},
-{id:"movie",name:"家庭電影夜",cost:150},
-{id:"dinner",name:"決定晚餐",cost:200},
-{id:"gift",name:"小禮物",cost:300},
-{id:"outing",name:"家庭出遊",cost:500}
-]};
-
-let role="",settings=null,completions=[],redemptions=[],heights=[],offset=0,unsubs=[];
-
-function assigned(t,w){return t.who==="both"||t.who===w}
-function active(t,date){
- if(t.repeat==="daily")return true;
- return (t.days||[]).includes(new Date(date+"T12:00:00").getDay());
-}
-function done(t,w,date){
- return completions.some(c=>c.taskId===t.id&&c.who===w&&c.date===date&&c.done);
-}
-function points(w){
- if(!settings)return 0;
- const earned=completions.filter(c=>c.who===w&&c.done).reduce((n,c)=>{
-  const t=settings.tasks.find(t=>t.id===c.taskId);
-  return n+(t&&assigned(t,w)&&active(t,c.date)?Number(t.pts):0);
- },0);
- const spent=redemptions.filter(r=>r.who===w).reduce((n,r)=>n+Number(r.cost),0);
- return earned-spent;
-}
-function avatar(w){
- return localStorage.getItem("huhu_avatar_"+w)||
- `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${w}`;
-}
-function setStatus(s){$("status").textContent=s}
-async function saveSettings(){
- if(role!=="parent")return;
- await setDoc(doc(db,root,"settings","main"),settings);
-}
-async function toggle(t,w,date){
- if(role!=="parent"&&role!==w)return;
- if(!assigned(t,w)||!active(t,date))return;
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
+import {getFirestore,doc,collection,onSnapshot,setDoc,addDoc,deleteDoc,getDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+const firebaseConfig={apiKey:'AIzaSyCER1LXH_go426_0HzVcnE2_4yGQrtfJPA',authDomain:'huhu-family.firebaseapp.com',projectId:'huhu-family',storageBucket:'huhu-family.firebasestorage.app',messagingSenderId:'103047217000',appId:'1:103047217000:web:b525e51edf8759bd6160dd',measurementId:'G-X2TLY2RFX8'};
+const ids={parent:'3IdS0dQIIUgh54gLZWveTIkYuzS2',Carole:'xKRWSKWkk7h6hbtIzTc6k5HJeZ73',Pyper:'21JCPFj99yYYaHVmpGMZPewNK8Y2'};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),fire=getFirestore(app),root='families/huhu';
+const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const defaults={tasks:[{id:'med',title:'早餐中藥',who:'both',pts:20,repeat:'weekly',days:[2,4,6]},{id:'jump',title:'跳繩 200 下',who:'both',pts:20,repeat:'daily'},{id:'catc',title:'貓罐頭',who:'Carole',pts:20,repeat:'weekly',days:[1,3]},{id:'catp',title:'貓罐頭',who:'Pyper',pts:20,repeat:'weekly',days:[5,0]},{id:'litterp',title:'清貓砂盆',who:'Pyper',pts:50,repeat:'weekly',days:[1,3]},{id:'litterc',title:'清貓砂盆',who:'Carole',pts:50,repeat:'weekly',days:[5,0]},{id:'sweepp',title:'掃地換水',who:'Pyper',pts:50,repeat:'weekly',days:[3]},{id:'sweepc',title:'掃地換水',who:'Carole',pts:50,repeat:'weekly',days:[6]}],rewards:[{id:'r1',name:'🍦 冰淇淋',cost:50},{id:'r2',name:'🎮 遊戲時間加 30 分鐘',cost:100},{id:'r3',name:'🍿 家庭電影之夜',cost:150},{id:'r4',name:'🍝 選晚餐',cost:200},{id:'r5',name:'🎀 小禮物',cost:300},{id:'r6',name:'🚗 親子週末出遊',cost:500}]};
+let role='',settings=null,completions=[],redemptions=[],heights=[],offset=0,unsubs=[],avatars={};
+const members=['Carole','Pyper'],localISO=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,today=()=>localISO(new Date());
+function monday(n=0){let d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7+7*n);return d}
+function dates(n){let d=monday(n);return Array.from({length:7},(_,i)=>{let x=new Date(d);x.setDate(d.getDate()+i);return localISO(x)})}
+function active(t,date){const day=new Date(date+'T12:00:00').getDay();return t.repeat==='daily'||(t.repeat==='weekly'&&t.days.includes(day))}
+function defaultAvatar(w){const emoji=w==='Carole'?'🌸':'🌷';return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="60" fill="#f6e9ff"/><text x="60" y="83" font-size="66" text-anchor="middle">${emoji}</text></svg>`)}
+async function compressAvatar(file){
+ if(!file.type.startsWith('image/'))throw Error('請選擇照片檔案');
+ if(file.size>20*1024*1024)throw Error('原始照片太大，請選擇 20MB 以下的照片');
+ const img=await createImageBitmap(file);
  try{
-  await setDoc(doc(db,root,"completions",`${t.id}_${w}_${date}`),{
-   taskId:t.id,who:w,date,done:!done(t,w,date)
-  });
- }catch(e){alert("儲存失敗："+e.message)}
-}
-function render(){
- if(!settings)return;
- document.querySelectorAll(".parentOnly").forEach(el=>{
-  el.classList.toggle("hidden",role!=="parent");
- });
- $("role").textContent=role==="parent"?"👨‍👩‍👧‍👧 家長管理員":"🌟 "+role;
-
- $("people").innerHTML=members.map(w=>`
- <div class="person">
- <img class="avatar" src="${avatar(w)}" alt="${w}">
- <h3>${w}</h3>
- <div class="points">${points(w)} ⭐</div>
- <label>更換照片 <input type="file" accept="image/*" data-avatar="${w}" style="width:100%"></label>
- </div>`).join("");
-
- $("today").innerHTML=settings.tasks.flatMap(t=>
-  members.filter(w=>assigned(t,w)&&active(t,today())).map(w=>`
-  <div class="entry row">
-  <button data-task="${esc(t.id)}" data-who="${w}" data-date="${today()}"
-  ${role!=="parent"&&role!==w?"disabled":""}>
-  ${done(t,w,today())?"✅":"⬜"}</button>
-  <span>${w}｜${esc(t.title)}｜+${t.pts} 點</span>
-  </div>`)
- ).join("")||"今天沒有任務";
-
- const dates=weekDates(offset);
- $("range").textContent=dates[0]+" ～ "+dates[6];
- const groups=[];
- settings.tasks.forEach(t=>{
-  let g=groups.find(g=>g.title===t.title&&g.pts===t.pts);
-  if(!g){g={title:t.title,pts:t.pts,tasks:[]};groups.push(g)}
-  g.tasks.push(t);
- });
- let html="<table><thead><tr><th>任務／成員</th>"+
- dates.map(d=>`<th>${d.slice(5)}<br>週${weekdays[new Date(d+"T12:00:00").getDay()]}</th>`).join("")+
- "</tr></thead><tbody>";
- groups.forEach(g=>{
-  html+=`<tr><th colspan="8">${esc(g.title)}（${g.pts} 點）</th></tr>`;
-  members.forEach(w=>{
-   if(!g.tasks.some(t=>assigned(t,w)))return;
-   html+=`<tr><td>${w}</td>`;
-   dates.forEach(d=>{
-    const t=g.tasks.find(t=>assigned(t,w)&&active(t,d));
-    html+=`<td>${t?`<button data-task="${esc(t.id)}" data-who="${w}" data-date="${d}"
-    ${role!=="parent"&&role!==w?"disabled":""}>${done(t,w,d)?"✅":"⬜"}</button>`:"—"}</td>`;
-   });
-   html+="</tr>";
-  });
- });
- $("weekTable").innerHTML=html+"</tbody></table>";
-
- $("taskList").innerHTML=settings.tasks.map(t=>`
- <div class="entry">${esc(t.title)}｜${t.who==="both"?"兩位女兒":t.who}｜${t.pts} 點
- ${role==="parent"?`<button data-remove="${esc(t.id)}">刪除</button>`:""}
- </div>`).join("");
-
- $("rewards").innerHTML=settings.rewards.map(r=>`
- <div class="entry row"><b>${esc(r.name)}</b>｜${r.cost} 點
- ${role==="parent"?`<select id="reward_${esc(r.id)}"><option>Carole</option><option>Pyper</option></select>
- <button class="primary" data-redeem="${esc(r.id)}">家長確認兌換</button>`:""}
- </div>`).join("");
-
- $("redemptions").innerHTML=redemptions.map(r=>
- `<div class="entry">${esc(r.who)}｜${esc(r.name)}｜${r.cost} 點｜${esc(r.date)}</div>`
- ).join("")||"尚無兌換紀錄";
-
- $("heightList").innerHTML=members.map(w=>{
-  const list=heights.filter(h=>h.who===w).sort((a,b)=>a.date.localeCompare(b.date));
-  const bars=list.slice(-8).map(h=>{
-   const height=Math.max(5,Math.min(145,(Number(h.cm)-50)*1.3));
-   return `<div style="text-align:center"><div class="bar" style="height:${height}px;padding-top:5px">${h.cm}</div><small>${esc(h.date.slice(5))}</small></div>`;
-  }).join("");
-  return `<h3>${w}</h3>${list.length?`<div class="chart">${bars}</div>`:"尚無身高紀錄"}
-  ${list.slice().reverse().map(h=>`<div class="entry">${esc(h.date)}｜${h.cm} cm</div>`).join("")}`;
- }).join("");
-}
-
-$("loginForm").onsubmit=async e=>{
- e.preventDefault();
- $("loginMsg").textContent="正在登入…";
- try{
-  await signInWithEmailAndPassword(auth,$("email").value,$("password").value);
-  $("loginMsg").textContent="";
- }catch(err){$("loginMsg").textContent="登入失敗，請檢查電子郵件及密碼。"}
-};
-
-$("logout").onclick=()=>signOut(auth);
-
-onAuthStateChanged(auth,async user=>{
- unsubs.forEach(f=>f());unsubs=[];
- settings=null;completions=[];redemptions=[];heights=[];
- if(!user){
-  role="";$("login").classList.remove("hidden");
-  $("app").classList.add("hidden");return;
- }
- role=Object.keys(UID).find(k=>UID[k]===user.uid)||"";
- if(!role){
-  alert("此帳號未獲家庭授權");
-  await signOut(auth);return;
- }
- $("login").classList.add("hidden");
- $("app").classList.remove("hidden");
- setStatus("正在連接雲端資料…");
-
- if(role==="parent"){
-  try{
-   const ref=doc(db,root,"settings","main");
-   const snap=await getDoc(ref);
-   if(!snap.exists())await setDoc(ref,defaults);
-  }catch(err){setStatus("初始化失敗："+err.message)}
- }
- function listen(ref,fn){
-  unsubs.push(onSnapshot(ref,fn,err=>setStatus("同步錯誤："+err.message)));
- }
- listen(doc(db,root,"settings","main"),snap=>{
-  settings=snap.exists()?snap.data():null;
-  setStatus(settings?"☁️ 雲端同步已連線":"請家長先登入初始化任務");
-  render();
- });
- listen(collection(db,root,"completions"),snap=>{
-  completions=snap.docs.map(d=>d.data());render();
- });
- listen(collection(db,root,"redemptions"),snap=>{
-  redemptions=snap.docs.map(d=>d.data());render();
- });
- listen(collection(db,root,"heights"),snap=>{
-  heights=snap.docs.map(d=>d.data());render();
- });
-});
-
-document.querySelectorAll("nav button").forEach(b=>{
- b.onclick=()=>{
-  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
-  b.classList.add("active");
-  ["home","week","tasks","shop","height"].forEach(id=>
-   $(id).classList.toggle("hidden",id!==b.dataset.page));
- };
-});
-$("prev").onclick=()=>{offset--;render()};
-$("next").onclick=()=>{offset++;render()};
-$("now").onclick=()=>{offset=0;render()};
-
-document.addEventListener("click",async e=>{
- const b=e.target.closest("button");
- if(!b||!settings)return;
- try{
-  if(b.dataset.task){
-   const t=settings.tasks.find(t=>t.id===b.dataset.task);
-   if(t)await toggle(t,b.dataset.who,b.dataset.date);
+  for(const side of [240,200,160,128,96]){
+   const canvas=document.createElement('canvas');canvas.width=side;canvas.height=side;
+   const ctx=canvas.getContext('2d');const crop=Math.min(img.width,img.height);
+   ctx.drawImage(img,(img.width-crop)/2,(img.height-crop)/2,crop,crop,0,0,side,side);
+   for(const quality of [.78,.60,.42]){
+    const data=canvas.toDataURL('image/jpeg',quality);
+    if(data.length<145000)return data;
+   }
   }
-  if(role==="parent"&&b.dataset.remove){
-   if(!confirm("確定刪除這個任務？"))return;
-   settings.tasks=settings.tasks.filter(t=>t.id!==b.dataset.remove);
-   await saveSettings();
-  }
-  if(role==="parent"&&b.dataset.redeem){
-   const r=settings.rewards.find(r=>r.id===b.dataset.redeem);
-   if(!r)return;
-   const w=$("reward_"+r.id).value;
-   if(points(w)<r.cost)return alert("目前點數不足");
-   if(!confirm(`確認讓 ${w} 兌換「${r.name}」？`))return;
-   await addDoc(collection(db,root,"redemptions"),{
-    who:w,name:r.name,cost:r.cost,date:new Date().toLocaleString("zh-TW")
-   });
-  }
- }catch(err){alert("操作失敗："+err.message)}
-});
-
-$("taskForm").onsubmit=async e=>{
- e.preventDefault();
- if(role!=="parent")return;
- const f=new FormData(e.target);
- const repeat=f.get("repeat");
- const days=[...$("weekdays").querySelectorAll("input:checked")].map(x=>Number(x.value));
- if(repeat==="weekly"&&!days.length)return alert("請選擇星期");
- settings.tasks.push({
-  id:"t"+Date.now(),title:String(f.get("title")).trim(),
-  who:f.get("who"),pts:Number(f.get("pts")),repeat,days
- });
- try{await saveSettings();e.target.reset()}
- catch(err){alert("新增失敗："+err.message)}
-};
-
-$("rewardForm").onsubmit=async e=>{
- e.preventDefault();
- if(role!=="parent")return;
- const f=new FormData(e.target);
- settings.rewards.push({
-  id:"r"+Date.now(),name:String(f.get("name")).trim(),cost:Number(f.get("cost"))
- });
- try{await saveSettings();e.target.reset()}
- catch(err){alert("新增失敗："+err.message)}
-};
-
-$("heightForm").onsubmit=async e=>{
- e.preventDefault();
- if(role!=="parent")return;
- const f=new FormData(e.target);
+  throw Error('照片無法壓縮至安全大小，請換一張照片');
+ }finally{img.close()}
+}
+function assigned(t,w){return t.who==='both'||t.who===w}
+function done(t,w,d){return completions.some(c=>c.taskId===t.id&&c.who===w&&c.date===d&&c.done)}
+function points(w){return completions.filter(c=>c.who===w&&c.done).reduce((sum,c)=>sum+(settings.tasks.find(t=>t.id===c.taskId)?.pts||0),0)-redemptions.filter(r=>r.who===w).reduce((sum,r)=>sum+r.cost,0)}
+async function saveSettings(){if(role!=='parent')return;await setDoc(doc(fire,root,'settings','main'),settings)}
+async function toggle(t,w,d){if(role!=='parent'&&role!==w)return;try{await setDoc(doc(fire,root,'completions',`${t.id}_${w}_${d}`),{taskId:t.id,who:w,date:d,done:!done(t,w,d)})}catch(e){alert('無法儲存：'+e.message)}}
+function render(){if(!settings)return;document.querySelectorAll('.parentOnly').forEach(x=>x.classList.toggle('hidden',role!=='parent'));
+ $('people').innerHTML=members.map(w=>`<div class="person"><img class="avatar" id="avatar_${w}" alt="${w} 的頭像" src="${avatars[w]||defaultAvatar(w)}"><h3>${w}</h3><b>⭐ ${points(w)} 點</b><div class="small">${role==='parent'||role===w?`<label class="secondary" style="display:inline-block;cursor:pointer;margin-top:8px">📷 更換照片<input type="file" accept="image/*" data-avatar="${w}" style="display:none"></label>`:'🔒 家庭共享照片'}</div></div>`).join('');
+ $('today').innerHTML=settings.tasks.flatMap(t=>members.filter(w=>assigned(t,w)&&active(t,today())).map(w=>`<div class="entry row"><button class="secondary" data-task="${esc(t.id)}" data-who="${w}" data-date="${today()}" ${role!=='parent'&&role!==w?'disabled':''}>${done(t,w,today())?'✅':'⬜'}</button><span>${w} · ${esc(t.title)} (+${t.pts})</span></div>`)).join('')||'今天沒有任務';
+ let ds=dates(offset),groups=[];settings.tasks.forEach(t=>{let g=groups.find(x=>x.title===t.title&&x.pts===t.pts);if(!g){g={title:t.title,pts:t.pts,tasks:[]};groups.push(g)}g.tasks.push(t)});
+ $('range').textContent=ds[0]+' ～ '+ds[6];$('weekTable').innerHTML=`<table><thead><tr><th>任務／成員</th>${ds.map((d,i)=>`<th>${'一二三四五六日'[i]}<br>${d.slice(5)}</th>`).join('')}</tr></thead><tbody>${groups.map(g=>`<tr class="taskhead"><td colspan="8">📌 ${esc(g.title)} · +${g.pts}點</td></tr>${members.filter(w=>g.tasks.some(t=>assigned(t,w))).map(w=>`<tr><td class="membercell">└ ${w}</td>${ds.map(d=>{let t=g.tasks.find(t=>assigned(t,w)&&active(t,d));return t?`<td><button data-task="${esc(t.id)}" data-who="${w}" data-date="${d}" ${role!=='parent'&&role!==w?'disabled':''}>${done(t,w,d)?'✓':'○'}</button></td>`:'<td class="off">—</td>'}).join('')}</tr>`).join('')}`).join('')}</tbody></table>`;
+ $('taskList').innerHTML=settings.tasks.map(t=>`<div class="entry">${esc(t.title)} · ${t.who==='both'?'兩人':t.who} · ${t.pts}點 ${role==='parent'?`<button class="secondary" data-remove-task="${esc(t.id)}">刪除</button>`:''}</div>`).join('');
+ $('rewards').innerHTML=settings.rewards.map(r=>`<div class="entry"><b>${esc(r.name)}</b> · ${r.cost}點 <select id="reward_${esc(r.id)}"><option>Carole</option><option>Pyper</option></select> ${role==='parent'?`<button class="primary" data-redeem="${esc(r.id)}">家長確認兌換</button>`:''}</div>`).join('');
+ $('redemptions').innerHTML=redemptions.map(r=>`<div class="entry">${esc(r.who)} · ${esc(r.name)} · ${r.cost}點 · ${esc(r.date)}</div>`).join('');
+ $('heightList').innerHTML=heights.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(h=>`<div class="entry">${esc(h.who)} · ${h.date} · ${h.cm} cm</div>`).join('');
+}
+$('loginForm').onsubmit=async e=>{e.preventDefault();$('loginMsg').textContent='登入中…';try{await signInWithEmailAndPassword(auth,$('email').value,$('password').value)}catch(err){$('loginMsg').textContent='登入失敗，請確認帳號密碼：'+err.code}};
+$('logout').onclick=()=>signOut(auth);
+onAuthStateChanged(auth,async user=>{unsubs.forEach(f=>f());unsubs=[];avatars={};if(!user||!Object.values(ids).includes(user.uid)){$('app').classList.add('hidden');$('login').classList.remove('hidden');if(user)await signOut(auth);return}role=Object.keys(ids).find(k=>ids[k]===user.uid);$('role').textContent=role==='parent'?'👨‍👩‍👧 家長':`🌟 ${role}`;$('login').classList.add('hidden');$('app').classList.remove('hidden');$('status').textContent='雲端連線中…';
+ if(role==='parent'){const ref=doc(fire,root,'settings','main');try{const snap=await getDoc(ref);if(!snap.exists())await setDoc(ref,defaults)}catch(e){$('status').textContent='資料庫連線錯誤：'+e.message}}
+ const listen=(ref,fn)=>unsubs.push(onSnapshot(ref,fn,e=>{$('status').textContent='同步錯誤：'+e.message}));
+ listen(doc(fire,root,'settings','main'),s=>{settings=s.exists()?s.data():null;$('status').textContent=settings?'☁️ 雲端同步已連線':'請家長先登入以初始化家庭任務';render()});
+ listen(collection(fire,root,'completions'),s=>{completions=s.docs.map(d=>d.data());render()});listen(collection(fire,root,'redemptions'),s=>{redemptions=s.docs.map(d=>d.data());render()});listen(collection(fire,root,'heights'),s=>{heights=s.docs.map(d=>d.data());render()});
+ listen(collection(fire,root,'avatars'),s=>{avatars={};s.docs.forEach(d=>{const v=d.data().image;if(members.includes(d.id)&&typeof v==='string'&&v.startsWith('data:image/jpeg;base64,'))avatars[d.id]=v});render()});});
+document.addEventListener('change',async e=>{
+ const input=e.target.closest('input[data-avatar]');if(!input||!input.files?.length)return;
+ const who=input.dataset.avatar;
+ if(role!=='parent'&&role!==who)return alert('只能修改自己的照片');
+ input.disabled=true;
+ $('status').textContent='📷 正在壓縮並上傳 '+who+' 的照片…';
  try{
-  await addDoc(collection(db,root,"heights"),{
-   who:f.get("who"),date:f.get("date"),cm:Number(f.get("cm"))
-  });
-  e.target.reset();
- }catch(err){alert("新增失敗："+err.message)}
-};
-
-document.addEventListener("change",e=>{
- const input=e.target;
- if(!input.dataset.avatar||!input.files?.[0])return;
- const w=input.dataset.avatar;
- if(role!=="parent"&&role!==w)return alert("只能修改自己的照片");
- const file=input.files[0];
- const img=new Image();
- img.onload=()=>{
-  const canvas=document.createElement("canvas");
-  canvas.width=180;canvas.height=180;
-  const ctx=canvas.getContext("2d");
-  const side=Math.min(img.width,img.height);
-  ctx.drawImage(img,(img.width-side)/2,(img.height-side)/2,side,side,0,0,180,180);
-  try{
-   localStorage.setItem("huhu_avatar_"+w,canvas.toDataURL("image/jpeg",.7));
-   render();
-  }catch(err){alert("照片儲存失敗，請換較小的照片")}
-  URL.revokeObjectURL(img.src);
- };
- img.src=URL.createObjectURL(file);
+  const image=await compressAvatar(input.files[0]);
+  await setDoc(doc(fire,root,'avatars',who),{image,updatedAt:serverTimestamp()});
+  $('status').textContent='☁️ 照片已儲存，正在同步至全家手機';
+ }catch(err){$('status').textContent='照片上傳失敗';alert('照片上傳失敗：'+err.message)}
+ finally{input.disabled=false;input.value=''}
 });
-</script>
-</body>
-</html>
+document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b||!settings)return;try{if(b.dataset.task){const t=settings.tasks.find(t=>t.id===b.dataset.task);if(t&&assigned(t,b.dataset.who)&&active(t,b.dataset.date))await toggle(t,b.dataset.who,b.dataset.date)}if(role==='parent'&&b.dataset.removeTask){settings.tasks=settings.tasks.filter(t=>t.id!==b.dataset.removeTask);await saveSettings()}if(role==='parent'&&b.dataset.redeem){let r=settings.rewards.find(r=>r.id===b.dataset.redeem),w=$('reward_'+r.id).value;if(points(w)<r.cost)return alert('點數不足');if(confirm(`家長確認：${w} 兌換 ${r.name}？`))await addDoc(collection(fire,root,'redemptions'),{who:w,name:r.name,cost:r.cost,date:new Date().toLocaleString('zh-TW')})}}catch(err){alert('操作失敗：'+err.message)}});
+$('taskForm').onsubmit=async e=>{e.preventDefault();if(role!=='parent')return;let f=new FormData(e.target),repeat=f.get('repeat'),days=[...$('weekdays').querySelectorAll('input:checked')].map(x=>+x.value);if(repeat==='weekly'&&!days.length)return alert('請選擇星期');settings.tasks.push({id:'t'+Date.now(),title:f.get('title').trim(),who:f.get('who'),pts:+f.get('pts'),repeat,days});await saveSettings();e.target.reset()};
+$('rewardForm').onsubmit=async e=>{e.preventDefault();if(role!=='parent')return;let f=new FormData(e.target);settings.rewards.push({id:'r'+Date.now(),name:f.get('name').trim(),cost:+f.get('cost')});await saveSettings();e.target.reset()};
+$('heightForm').onsubmit=async e=>{e.preventDefault();if(role!=='parent')return;let f=new FormData(e.target);await addDoc(collection(fire,root,'heights'),{who:f.get('who'),date:f.get('date'),cm:+f.get('cm')});e.target.reset()};
+$('heightForm').querySelector('input[type=date]').value=today();
+$('prev').onclick=()=>{offset--;render()};$('next').onclick=()=>{offset++;render()};$('now').onclick=()=>{offset=0;render()};
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('#app section').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.page))});
+</script></body></html>
